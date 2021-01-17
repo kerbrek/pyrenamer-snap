@@ -1,0 +1,126 @@
+name: pyrenamer
+base: core18
+version: '0.6.0'
+summary: Mass file renamer for GNOME
+description: |
+  pyRenamer is a mass file renamer written in PyGTK. You can rename files using
+  patterns, search and replace, substitutions, insert or delete text, or even
+  rename files manually. You can also rename images using their EXIF tags and
+  music using their internal tags.
+
+grade: stable
+confinement: strict
+
+# GTK2 Applications
+#   https://snapcraft.io/docs/gtk2-applications
+
+apps:
+  pyrenamer:
+    command: desktop-launch pyrenamer
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+    desktop: usr/share/applications/pyrenamer.desktop
+    plugs:
+      - desktop-legacy
+      - gconf
+      - home
+      - removable-media
+      - unity7
+      - x11
+
+layout:
+  /usr/bin/python:
+    bind-file: $SNAP/usr/bin/python2.7
+  /usr/lib/python2.7:
+    bind: $SNAP/usr/lib/python2.7
+  /usr/share/pyrenamer:
+    bind: $SNAP/usr/share/pyrenamer
+
+parts:
+  pyrenamer:
+    plugin: dump
+    source: https://launchpadlibrarian.net/230018957/pyrenamer_0.6.0-1.2_all.deb
+    source-checksum: sha256/6641fb7e717e49fae2797a901d5ea20feca6cb135f2acccc5081c06640d74f14
+    stage-packages:
+      - gconf2
+      - python
+      - python-gconf
+      - python-glade2
+      - python-gtk2
+      - python-hachoir-metadata
+    after:
+      - desktop-gtk2
+
+  # This part installs the `desktop-launch` script which initialises desktop
+  # features such as fonts, themes and the XDG environment. It also installs
+  # the GTK2 runtime libraries.
+  #
+  # It is copied straight from the snapcraft desktop helpers project. Please
+  # periodically check the source for updates and copy the changes.
+  #   https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml
+  #
+  desktop-gtk2:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: gtk
+    plugin: make
+    make-parameters: ["FLAVOR=gtk2"]
+    build-packages:
+      - build-essential
+      - libgtk2.0-dev
+    stage-packages:
+      - libxkbcommon0  # XKB_CONFIG_ROOT
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk2.0-0
+      - libgdk-pixbuf2.0-0
+      - libglib2.0-bin
+      - libgtk2.0-bin
+      - unity-gtk2-module
+      - locales-all
+      - libappindicator1
+      - xdg-user-dirs
+      - ibus-gtk
+      - libibus-1.0-5
+
+  # This part removes all the files in this snap which already exist in
+  # connected content and base snaps. Since these files will be available
+  # at runtime from the content and base snaps, they do not need to be
+  # included in this snap itself.
+  #
+  # More info: https://forum.snapcraft.io/t/reducing-the-size-of-desktop-snaps/17280
+  #
+  cleanup:
+    after:  # Make this part run last; list all your other parts here
+      - desktop-gtk2
+      - pyrenamer
+    plugin: nil
+    build-snaps:  # List all content-snaps and base snaps you're using here
+      - core18
+    override-prime: |
+      set -eux
+      for snap in "core18"; do  # List all content-snaps and base snaps you're using here
+          cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
+      done
+
+plugs:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
