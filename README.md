@@ -50,4 +50,5 @@ Project homepage: https://launchpad.net/pyrenamer
 ## Alternatives
 
 * [KRename](https://apps.kde.org/en/krename)
+* [FileRenamer](https://www.sttmedia.com/filerenamer)
 * [Ant Renamer](https://www.antp.be/software/renamer) (Windows app, requires [Wine](https://www.winehq.org/))
